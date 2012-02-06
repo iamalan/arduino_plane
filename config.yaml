@@ -5,7 +5,7 @@ xp_packet_header: CCCCC
 xp_packet_data_s: lffffffff
 xp_no: -999 # X-Plane's value 
 
-serial: /dev/tty.usbmodem621
+serial: /dev/tty.usbmodem411
 baud: 9600
 data_bits: 8
 stop_bits: 1

@@ -167,7 +167,7 @@ void loop()
                 input_values[0] = switch_stat;
                 
                 trim = analogRead(IN_TRIM);
-                trim = map(trim, 0, 800, 0, 255);
+                trim = map(trim, 0, 1023, 0, 255);
                 input_values[1] = trim; 
                 
                 flap = analogRead(IN_FLAP);
