@@ -15,7 +15,8 @@ def getBytes(sp,size)
         data << sp.getbyte
       end
     
-      checksum = (sp.getbyte << size + 2 | sp.getbyte)
+      checksum = (sp.getbyte << 8 | sp.getbyte)
+
       if checksum != data.inject(:+)
         data = []
       end
@@ -108,7 +109,7 @@ while true
     
 
 
-    if (serial_data = getBytes(sp,2)) != []
+    if (serial_data = getBytes(sp,3)) != []
      p serial_data
     
       
@@ -127,8 +128,8 @@ while true
                                       0.1 + (serial_data[1]-125.0)/125.0,
                                       CONFIG["xp_no"],
                                       CONFIG["xp_no"],
-                                      CONFIG["xp_no"],
-                                      CONFIG["xp_no"],
+                                      serial_data[2]/255.0,
+                                      CONFIG["xp_no"], 
                                       CONFIG["xp_no"],
                                       CONFIG["xp_no"],
                                       CONFIG["xp_no"]]

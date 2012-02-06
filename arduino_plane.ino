@@ -18,8 +18,9 @@ int readIntFromSerial()
 
 byte switch_stat;
 int trim;
+int flap;
 
-byte input_values[2];
+byte input_values[3];
 byte values[5];
 int num_vals;
 
@@ -124,6 +125,7 @@ void toggleByteIfValueHIGH(byte* pByte, int thePin)
 #define OUT_FLAP_POS    7
 #define IN_SWITCH       12
 #define IN_TRIM         0
+#define IN_FLAP         1
 // END PIN DEFINES
 
 void setup() 
@@ -136,7 +138,10 @@ void setup()
         pinMode(OUT_RIGHT_GEAR,OUTPUT); //right gear  
         servo.attach(OUT_FLAP_POS);  //flap pos  
         pinMode(IN_SWITCH,INPUT); //switch
+        pinMode(IN_FLAP,INPUT); //flap
         pinMode(13,OUTPUT);
+        
+
         
 }
 
@@ -160,10 +165,15 @@ void loop()
                 
                 
                 input_values[0] = switch_stat;
+                
                 trim = analogRead(IN_TRIM);
                 trim = map(trim, 0, 800, 0, 255);
                 input_values[1] = trim; 
                 
-                sendArray(input_values,2);            
+                flap = analogRead(IN_FLAP);
+                flap = map(flap, 0, 1023, 0, 255);
+                input_values[2] = flap; 
+                
+                sendArray(input_values,3);            
 }
 
