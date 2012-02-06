@@ -1,12 +1,77 @@
 #include <Servo.h> 
 Servo servo;
 
+
+int readIntFromSerial()
+{
+  union u_tag
+  {
+    char bytes[2];
+    int val;
+  } u;
+
+  u.bytes[0] = Serial.read();
+  u.bytes[1] = Serial.read();	
+  return u.val;
+}
+
+
 byte switch_stat;
 int trim;
 
 byte input_values[2];
 byte values[5];
 int num_vals;
+
+// Here we get bytes
+int getBytes(byte byteArray[], int len)
+{
+  int checksum = 0;
+  int checksum_in_data = 0;
+  int return_val = -1;
+  int timeout = 0;
+  
+  //Serial.println(Serial.available());
+  while (Serial.available() < len + 3)
+  {
+    //wait, consider adding a break out trigger here
+    //Serial.println("Waiting for required length of buffer...");
+    timeout++;
+    if (timeout == 100) return return_val;
+  }
+  timeout = 0;
+  //Serial.println(Serial.available());
+  while ((byte)Serial.read() != 0xff)
+  {
+    // chew through the bytes that arent the sync
+    //Serial.println("Chewing for sync byte");
+    timeout++;
+    if (timeout == 100) return return_val;
+  }
+  //Serial.println("got sync byte..");
+  
+ // here we got a sync, so read the rest
+       for (int i = 0; i < len; i++)
+       {
+         int val = Serial.read();
+         //Serial.print("READ: ");
+         //Serial.println(val);
+         byteArray[i] = (byte)val;
+         checksum+=val;
+       }
+       
+       checksum_in_data = readIntFromSerial();
+       
+       if (checksum_in_data == checksum)
+       {
+         return_val = 0;
+         //Serial.println("CHECKSUM OK");
+       }
+     
+
+   return return_val; 
+} 
+// end ////////
 
 // Here we send the byteArray over Serial.
 void sendArray(byte byteArray[], int len)
@@ -71,21 +136,17 @@ void setup()
         pinMode(OUT_RIGHT_GEAR,OUTPUT); //right gear  
         servo.attach(OUT_FLAP_POS);  //flap pos  
         pinMode(IN_SWITCH,INPUT); //switch
+        pinMode(13,OUTPUT);
         
 }
 
 void loop()
 {
-	if (Serial.available() > 5) 
-        {
-		num_vals = Serial.read();
-                
-                for (int i = 0; i < num_vals; i++)
-                {
-                    values[i] = Serial.read();
 
-                }
-                
+
+                getBytes(values,5);
+
+
                 servo.write(map(values[0], 127, 255, 0, 180));
                 
                 togglePinIfValue(OUT_RIGHT_GEAR, values[2], 255);
@@ -93,9 +154,10 @@ void loop()
                 togglePinIfValue(OUT_LEFT_GEAR, values[3], 255);
                 
                 togglePinIfValue(OUT_STALL, values[4], 255);
-        }
-
-                toggleByteIfValueHIGH(&switch_stat, digitalRead(IN_SWITCH));
+                toggleByteIfValueHIGH(&switch_stat, IN_SWITCH);
+                
+              
+                
                 
                 input_values[0] = switch_stat;
                 trim = analogRead(IN_TRIM);

@@ -7,25 +7,32 @@ require 'YAML'
 
 def getBytes(sp,size)
   data = []
-
-    if sp.getbyte == 0xff
+    while(sp.getbyte != 0xff)
+      end
+ 
    
       size.times do 
         data << sp.getbyte
       end
     
       checksum = (sp.getbyte << size + 2 | sp.getbyte)
-      if checksum == data.inject(:+)
-        return data
+      if checksum != data.inject(:+)
+        data = []
       end
-    else
-      data = []
-    end
-      
+
    return data
 end
 
 
+def sendArray(sp,array)
+  sp.write([255].pack('C'));
+  checksum = 0;
+  array.each do |value|
+    sp.write([value].pack('C'))
+    checksum = checksum + value
+  end
+  sp.write([checksum].pack('s'))
+end
 
 
 CONFIG = File.open("config.yaml") { |f| YAML.load(f) }
@@ -90,40 +97,47 @@ while true
     # some values are obviously different - eg altitude. In that case we would send a float.
     # an improvement would be having the mask know whether to send a float or not. EDGE case at the moment.
     
-    sp.write [serial_vals.length].pack('C')
-    output_format = ""
-    serial_vals.length.times { output_format << 'C'}
-    sp.write serial_vals.pack(output_format)
+    #sp.write [serial_vals.length].pack('C')
+    #output_format = ""
+    #serial_vals.length.times { output_format << 'C'}
+    #sp.write serial_vals.pack(output_format)
+    sendArray(sp,serial_vals)
+    
     p serial_vals
 
+    
+
+
     if (serial_data = getBytes(sp,2)) != []
-      p serial_data
+     p serial_data
     
       
    
     
     my_data = [68,65,84,65,0, 14,
-                              serial_data[0],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              13,
-                              0.1 + (serial_data[1]-125.0)/125.0,
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"],
-                              CONFIG["xp_no"]]
-                              
-                    
-    
-    s.send(my_data.pack("#{CONFIG["xp_packet_header"]}#{CONFIG["xp_packet_data_s"]}#{CONFIG["xp_packet_data_s"]}"), 0, CONFIG["xp_ip"], CONFIG["xp_recv_port"])
-  end
+                                     serial_data[0],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      13,
+                                      0.1 + (serial_data[1]-125.0)/125.0,
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"],
+                                      CONFIG["xp_no"]]
+                                   
+                      
+      
+      s.send(my_data.pack("#{CONFIG["xp_packet_header"]}#{CONFIG["xp_packet_data_s"]}#{CONFIG["xp_packet_data_s"]}"), 0, CONFIG["xp_ip"], CONFIG["xp_recv_port"])
+    end
+  
+
     
 end
