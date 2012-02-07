@@ -9,8 +9,7 @@ def getBytes(sp,size)
   data = []
     while(sp.getbyte != 0xff)
       end
- 
-   
+
       size.times do 
         data << sp.getbyte
       end
@@ -89,6 +88,8 @@ while true
     packet_values[data[packet_offset]] = data[(packet_offset+1)..(packet_offset+CONFIG["xp_packet_data_s"].length-1)]
     packet_offset += CONFIG["xp_packet_data_s"].length
   end
+  
+ 
   # get the packets keys which are the packet types
   # this way the result after the mask is in sorted order of the packet type number
   types = packet_values.keys
@@ -115,9 +116,6 @@ while true
     sendArray(sp,serial_vals)
     
     p serial_vals
-
-    
-
 
     if (serial_data = getBytes(sp,3)) != []
   
@@ -155,32 +153,9 @@ while true
         packet_location += 9
       
       end
-
- 
-    
-    
-    # my_data = [68,65,84,65,0, 14,
-    #                                             serial_data[0],
-    #                                              CONFIG["xp_no"],
-    #                                              CONFIG["xp_no"],
-    #                                              CONFIG["xp_no"],
-    #                                              CONFIG["xp_no"],
-    #                                              CONFIG["xp_no"],
-    #                                              CONFIG["xp_no"],
-    #                                              CONFIG["xp_no"],
-    #                                              13,
-    #                                              0.1 + (serial_data[1]-125.0)/125.0,
-    #                                              CONFIG["xp_no"],
-    #                                              CONFIG["xp_no"],
-    #                                              serial_data[2]/255.0,
-    #                                              CONFIG["xp_no"], 
-    #                                              CONFIG["xp_no"],
-    #                                              CONFIG["xp_no"],
-    #                                              CONFIG["xp_no"]]
-    #                                           
-           
       
-      s.send(my_data.pack("#{CONFIG["xp_packet_header"]}#{CONFIG["xp_packet_data_s"]}#{CONFIG["xp_packet_data_s"]}"), 0, CONFIG["xp_ip"], CONFIG["xp_recv_port"])
+      s.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_types.length), 0, CONFIG["xp_ip"], CONFIG["xp_recv_port"]
+  	  
     end
   
 
