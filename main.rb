@@ -3,10 +3,9 @@ require 'socket'
 require 'serialport'
 require 'YAML'
 
-
-
 def getBytes(sp,size)
   data = []
+  
     while(sp.getbyte != 0xff)
       end
 
@@ -23,7 +22,6 @@ def getBytes(sp,size)
    return data
 end
 
-
 def sendArray(sp,array)
   sp.write([255].pack('C'));
   checksum = 0;
@@ -34,16 +32,12 @@ def sendArray(sp,array)
   sp.write([checksum].pack('s'))
 end
 
-
 CONFIG = File.open("config.yaml") { |f| YAML.load(f) }
 puts "Configuration:"
 puts CONFIG.to_yaml
 
 sp = SerialPort.new(CONFIG["serial"], CONFIG["baud"], CONFIG["data_bits"], CONFIG["stop_bits"], SerialPort::NONE)
 sp.sync = true #what is this really?
-
-
-
 
 # The data_mask is how we filter the packet from X-Plane and defines what we deliver to the arduino.
 ALL = [0,1,2,3,4,5,6,7]
@@ -55,13 +49,11 @@ data_mask[67] = [0,1,2]
 data_mask[127] = [6]
 data_mask[13] = [4] #flap position
 
-
 # Arduino to PC data masking
 # data from the arduino arrives in an array of some order. Create a convention that data is always arranged in ascending order of its type and order in the 8 values.
 arduino_to_pc_serial_mask = {}
 arduino_to_pc_serial_mask[14] = [0]
 arduino_to_pc_serial_mask[13] = [0,3]
-
 
 # based on the number of keys in the mask, the UDP packet we expect will have a header and a number of data_blocks
 this_packet = {:header => 1, :data_blocks => data_mask.keys.length}
@@ -109,10 +101,6 @@ while true
     # some values are obviously different - eg altitude. In that case we would send a float.
     # an improvement would be having the mask know whether to send a float or not. EDGE case at the moment.
     
-    #sp.write [serial_vals.length].pack('C')
-    #output_format = ""
-    #serial_vals.length.times { output_format << 'C'}
-    #sp.write serial_vals.pack(output_format)
     sendArray(sp,serial_vals)
     
     p serial_vals
@@ -120,11 +108,11 @@ while true
     if (serial_data = getBytes(sp,3)) != []
   
     p serial_data
-    #screw with the values. implement in the masks later
+    #screw with the values. implement in the masks later TODO
     serial_data[0] = 0.1 + (serial_data[0]-125.0)/125.0
     serial_data[1] = serial_data[1]/255.0  
     
-       p serial_data
+    p serial_data
       
     serial_types = arduino_to_pc_serial_mask.keys.sort
   
@@ -143,18 +131,15 @@ while true
     
     packet_location = 6
       
-      serial_types.each do |key|
-        
+      serial_types.each do |key|   
        this_mask =  arduino_to_pc_serial_mask[key]
         this_mask.each do |v|
            my_data[packet_location + v] = serial_data[next_value]
            next_value += 1
         end
         packet_location += 9
-      
       end
       
-      s.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_types.length), 0, CONFIG["xp_ip"], CONFIG["xp_recv_port"]
-  	  
+      s.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_types.length), 0, CONFIG["xp_ip"], CONFIG["xp_recv_port"]	  
     end
 end
