@@ -39,15 +39,16 @@ puts CONFIG.to_yaml
 sp = SerialPort.new(CONFIG["serial"], CONFIG["baud"], CONFIG["data_bits"], CONFIG["stop_bits"], SerialPort::NONE)
 sp.sync = true #what is this really?
 
-# The data_mask is how we filter the packet from X-Plane and defines what we deliver to the arduino.
+# The pc_to_arduino_mask is how we filter the packet from X-Plane and defines what we deliver to the arduino.
 ALL = [0,1,2,3,4,5,6,7]
 NONE = []
+
 # the reason we need to define all of the data we expect in the packet is because we want to know how many bytes to recv later on.
-# data is sent over serial in ascending order of the keys of the data_mask and then in ascending order of the mask itself.
-data_mask = {}
-data_mask[67] = [0,1,2]
-data_mask[127] = [6]
-data_mask[13] = [4] #flap position
+# data is sent over serial in ascending order of the keys of the pc_to_arduino_mask and then in ascending order of the mask itself.
+pc_to_arduino_mask = {}
+pc_to_arduino_mask[67] = [0,1,2]
+pc_to_arduino_mask[127] = [6]
+pc_to_arduino_mask[13] = [4] #flap position
 
 # Arduino to PC data masking
 # data from the arduino arrives in an array of some order. Create a convention that data is always arranged in ascending order of its type and order in the 8 values.
@@ -56,7 +57,7 @@ arduino_to_pc_serial_mask[14] = [0]
 arduino_to_pc_serial_mask[13] = [0,3]
 
 # based on the number of keys in the mask, the UDP packet we expect will have a header and a number of data_blocks
-this_packet = {:header => 1, :data_blocks => data_mask.keys.length}
+this_packet = {:header => 1, :data_blocks => pc_to_arduino_mask.keys.length}
 
 # create the string that unpacks the packet based on the expected packet
 unpacking_string = "#{CONFIG["xp_packet_header"]}"
@@ -89,8 +90,8 @@ while true
   serial_vals = []
   types.each do |key|
     # if the packet number is in the mask lets retain it
-    if data_mask[key] != nil
-        data_mask[key].sort.each do |mask|
+    if pc_to_arduino_mask[key] != nil
+        pc_to_arduino_mask[key].sort.each do |mask|
           serial_vals << ((packet_values[key][mask]*127.5)+127.5).to_i;
         end
       end
