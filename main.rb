@@ -157,7 +157,4 @@ while true
       s.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_types.length), 0, CONFIG["xp_ip"], CONFIG["xp_recv_port"]
   	  
     end
-  
-
-    
 end
