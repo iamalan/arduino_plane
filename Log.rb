@@ -14,8 +14,7 @@ class Log
   end
 end
 
-
-# Example usage.
-log = Log.new 'log.txt'
-log.add 'Did something'
-log.close
+# # Example usage.
+# log = Log.new 'log.txt'
+# log.add 'Did something.'
+# log.close
