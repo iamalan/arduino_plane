@@ -17,6 +17,8 @@ class Arduino
     
       rescue Exception => e
         Log.instance.add "#{e} #{e.backtrace}"
+        # re raise, this is a deal breaker.
+        raise e 
       end   
   end
   

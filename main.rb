@@ -28,7 +28,7 @@ pc_to_arduino_mask[67] = [0,1,2]
 pc_to_arduino_mask[127] = [6]
 pc_to_arduino_mask[13] = [4] #flap position
 
-x.set_pc_to_arduino_mask(pc_to_arduino_mask)
+x.set_mask(pc_to_arduino_mask)
 
 # Arduino to PC data masking
 # data from the arduino arrives in an array of some order. Create a convention that data is always arranged in ascending order of its type and order in the 8 values.
@@ -53,6 +53,7 @@ while true
   #d,a = s.recv(CONFIG["xp_packet_header"].length + 36*this_packet[:data_blocks])
   data = x.getPacket
   #data = d.unpack(unpacking_string)
+ 
   
    serial_vals = x.apply_mask(data)
   

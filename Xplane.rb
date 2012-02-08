@@ -27,7 +27,7 @@ class Xplane
       d,a = @s.recv(@CONFIG["xp_packet_header"].length + 36*@this_packet[:data_blocks])
       data = d.unpack(@unpacking_string)
       Log.instance.add "Unpacked packet, returning #{data.inspect}"
-      return data
+      return data[CONFIG["xp_packet_header"].length..data.length]
     
     rescue Exception => e
       Log.instance.add "#{e} #{e.backtrace}"
@@ -39,13 +39,14 @@ class Xplane
     @s.send(blah, 0, @CONFIG["xp_ip"], @CONFIG["xp_recv_port"])
   end
   
-  def set_pc_to_arduino_mask(pc_to_a_mask)
-    @pc_to_a_mask = pc_to_a_mask
-    @this_packet = {:header => 1, :data_blocks => @pc_to_a_mask.keys.length}
+  def set_mask(mask)
+    @mask = mask
+    @this_packet = {:header => 1, :data_blocks => @mask.keys.length}
     @unpacking_string = "#{@CONFIG["xp_packet_header"]}"
     @this_packet[:data_blocks].times { @unpacking_string << @CONFIG["xp_packet_data_s"] }
   end
   
+  #obsolete with the new mapper stuff
   def apply_mask(data)
     
     packet_header = data[0..@CONFIG["xp_packet_header"].length-1]
@@ -64,8 +65,8 @@ class Xplane
     filtered_vals = []
     types.each do |key|
       # if the packet number is in the mask lets retain it
-      if @pc_to_a_mask[key] != nil
-          @pc_to_a_mask[key].sort.each do |mask|
+      if @mask[key] != nil
+          @mask[key].sort.each do |mask|
             filtered_vals << ((packet_values[key][mask]*127.5)+127.5).to_i; #TODO this is where we filter values i'd say...
           end
         end
