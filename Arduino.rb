@@ -7,7 +7,6 @@ require 'log'
 class Arduino
   def initialize(config_file)   
     begin
-    
       @CONFIG = File.open(config_file) { |f| YAML.load(f) }
     
       Log.instance.log_to_screen
@@ -16,14 +15,11 @@ class Arduino
     
       @sp = SerialPort.new(@CONFIG["serial"], @CONFIG["baud"], @CONFIG["data_bits"], @CONFIG["stop_bits"], SerialPort::NONE)
     
-      rescue => msg
-        Log.instance.add msg
+      rescue Exception => e
+        Log.instance.add "#{e} #{e.backtrace}"
       end   
   end
 end
-
-
-
 
 a = Arduino.new 'arduino_config.yaml'
 
