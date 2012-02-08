@@ -68,6 +68,9 @@ class Arduino
         Log.instance.add "#{e} #{e.backtrace}"
     end
   end
+  
+
+  
 end
 
 #a = Arduino.new 'arduino_config.yaml'

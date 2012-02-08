@@ -28,6 +28,8 @@ pc_to_arduino_mask[67] = [0,1,2]
 pc_to_arduino_mask[127] = [6]
 pc_to_arduino_mask[13] = [4] #flap position
 
+x.set_pc_to_arduino_mask(pc_to_arduino_mask)
+
 # Arduino to PC data masking
 # data from the arduino arrives in an array of some order. Create a convention that data is always arranged in ascending order of its type and order in the 8 values.
 arduino_to_pc_serial_mask = {}
@@ -35,11 +37,11 @@ arduino_to_pc_serial_mask[14] = [0]
 arduino_to_pc_serial_mask[13] = [0,3]
 
 # based on the number of keys in the mask, the UDP packet we expect will have a header and a number of data_blocks
-this_packet = {:header => 1, :data_blocks => pc_to_arduino_mask.keys.length}
+#this_packet = {:header => 1, :data_blocks => pc_to_arduino_mask.keys.length} # moved to x_plane class
 
 # create the string that unpacks the packet based on the expected packet
-unpacking_string = "#{CONFIG["xp_packet_header"]}"
-this_packet[:data_blocks].times { unpacking_string << CONFIG["xp_packet_data_s"] }
+# unpacking_string = "#{CONFIG["xp_packet_header"]}"
+# this_packet[:data_blocks].times { unpacking_string << CONFIG["xp_packet_data_s"] }
 
 #s = UDPSocket.new
 #s.bind('',CONFIG["xp_send_port"])
@@ -49,16 +51,10 @@ puts "Entering loop..."
 
 while true
   #d,a = s.recv(CONFIG["xp_packet_header"].length + 36*this_packet[:data_blocks])
-  data = x.getPacket(this_packet[:data_blocks], unpacking_string)
+  data = x.getPacket
   #data = d.unpack(unpacking_string)
-  packet_header = data[0..CONFIG["xp_packet_header"].length-1]
   
-  packet_values = {}
-  packet_offset = CONFIG["xp_packet_header"].length
-  this_packet[:data_blocks].times do
-    packet_values[data[packet_offset]] = data[(packet_offset+1)..(packet_offset+CONFIG["xp_packet_data_s"].length-1)]
-    packet_offset += CONFIG["xp_packet_data_s"].length
-  end
+  packet_values = x.unpack(data)
   
  
   # get the packets keys which are the packet types
