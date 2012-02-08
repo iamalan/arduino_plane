@@ -4,10 +4,13 @@ require 'serialport'
 require 'YAML'
 
 require 'arduino' #new
+require 'xplane'
 
 CONFIG = File.open("config.yaml") { |f| YAML.load(f) }
-puts "Configuration:"
-puts CONFIG.to_yaml
+#puts "Configuration:"
+#puts CONFIG.to_yaml
+
+x = Xplane.new 'xplane_config.yaml'
 
 arduino = Arduino.new 'arduino_config.yaml'
 
@@ -38,16 +41,16 @@ this_packet = {:header => 1, :data_blocks => pc_to_arduino_mask.keys.length}
 unpacking_string = "#{CONFIG["xp_packet_header"]}"
 this_packet[:data_blocks].times { unpacking_string << CONFIG["xp_packet_data_s"] }
 
-s = UDPSocket.new
-s.bind('',CONFIG["xp_send_port"])
+#s = UDPSocket.new
+#s.bind('',CONFIG["xp_send_port"])
 
 puts
 puts "Entering loop..."
 
 while true
-  d,a = s.recv(CONFIG["xp_packet_header"].length + 36*this_packet[:data_blocks])
-
-  data = d.unpack(unpacking_string)
+  #d,a = s.recv(CONFIG["xp_packet_header"].length + 36*this_packet[:data_blocks])
+  data = x.getPacket(this_packet[:data_blocks], unpacking_string)
+  #data = d.unpack(unpacking_string)
   packet_header = data[0..CONFIG["xp_packet_header"].length-1]
   
   packet_values = {}
@@ -116,6 +119,6 @@ while true
         packet_location += 9
       end
       
-      s.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_types.length), 0, CONFIG["xp_ip"], CONFIG["xp_recv_port"]	  
+      x.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_types.length)
     end
 end
