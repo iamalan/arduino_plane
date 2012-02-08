@@ -20,6 +20,36 @@ class Arduino
       end   
   end
   
+  def getBytes(size)
+    data = []
+    begin
+      Log.instance.add "#{self.class.name} #{__method__} called."
+      while(@sp.getbyte != 0xff)
+        end
+        Log.instance.add "Got sync byte over serial."
+        
+        size.times do 
+          got = @sp.getbyte
+          data << got
+          Log.instance.add "Got #{got} over serial."
+        end
+
+        checksum = (@sp.getbyte << 8 | @sp.getbyte)
+        Log.instance.add "Got checksum: #{checksum} over serial."
+
+        if checksum != data.inject(:+)
+          Log.instance.add "Checksum is not equal."
+          data = []
+        end
+      rescue Exception => e
+            Log.instance.add "#{e} #{e.backtrace}"
+      end
+      
+     Log.instance.add "Passed checksum :)."
+     Log.instance.add "getBytes returning #{data.inspect}"
+     return data
+  end
+  
   def sendArray(array)
     begin
       Log.instance.add "#{self.class.name} #{__method__} called with #{array.inspect}."
@@ -40,6 +70,6 @@ class Arduino
   end
 end
 
-a = Arduino.new 'arduino_config.yaml'
-a.sendArray([300,255,255])
+#a = Arduino.new 'arduino_config.yaml'
+#a.sendArray([300,255,255])
 
