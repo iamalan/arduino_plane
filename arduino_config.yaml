@@ -1,4 +1,4 @@
-serial: /dev/tty.usbmodem411
+serial: /dev/tty.usbmodem621
 baud: 9600
 data_bits: 8
 stop_bits: 1
