@@ -31,8 +31,11 @@ class Log
     @this_log = File.open('log.txt', 'w')
     add('File log opened.')
   end
-  
 end
+
+# This would be the best place to decide how we should log.
+Log.instance.log_to_screen
+
 
 # # Example usage for log to file
 # Log.instance.log_to_file
