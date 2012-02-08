@@ -46,7 +46,7 @@ class Xplane
     @this_packet[:data_blocks].times { @unpacking_string << @CONFIG["xp_packet_data_s"] }
   end
   
-  def unpack(data)
+  def apply_mask(data)
     
     packet_header = data[0..@CONFIG["xp_packet_header"].length-1]
 
@@ -56,7 +56,22 @@ class Xplane
       packet_values[data[packet_offset]] = data[(packet_offset+1)..(packet_offset+@CONFIG["xp_packet_data_s"].length-1)]
       packet_offset += @CONFIG["xp_packet_data_s"].length
     end
-    return packet_values
+    
+    # get the packets keys which are the packet types
+    # this way the result after the mask is in sorted order of the packet type number
+    types = packet_values.keys
+    types.sort!
+    filtered_vals = []
+    types.each do |key|
+      # if the packet number is in the mask lets retain it
+      if @pc_to_a_mask[key] != nil
+          @pc_to_a_mask[key].sort.each do |mask|
+            filtered_vals << ((packet_values[key][mask]*127.5)+127.5).to_i; #TODO this is where we filter values i'd say...
+          end
+        end
+      end
+  
+    return filtered_vals
   end
   
 end

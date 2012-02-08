@@ -54,22 +54,10 @@ while true
   data = x.getPacket
   #data = d.unpack(unpacking_string)
   
-  packet_values = x.unpack(data)
+   serial_vals = x.apply_mask(data)
   
  
-  # get the packets keys which are the packet types
-  # this way the result after the mask is in sorted order of the packet type number
-  types = packet_values.keys
-  types.sort!
-  serial_vals = []
-  types.each do |key|
-    # if the packet number is in the mask lets retain it
-    if pc_to_arduino_mask[key] != nil
-        pc_to_arduino_mask[key].sort.each do |mask|
-          serial_vals << ((packet_values[key][mask]*127.5)+127.5).to_i;
-        end
-      end
-    end
+  
 
     # write the serial values as chars, I can't see a reason for the arduino to have floats. 
     # ASSUME that all values are between 0 and 1 and we will map them to 0-255
