@@ -3,41 +3,16 @@ require 'socket'
 require 'serialport'
 require 'YAML'
 
-def getBytes(sp,size)
-  data = []
-  
-    while(sp.getbyte != 0xff)
-      end
-
-      size.times do 
-        data << sp.getbyte
-      end
-    
-      checksum = (sp.getbyte << 8 | sp.getbyte)
-
-      if checksum != data.inject(:+)
-        data = []
-      end
-
-   return data
-end
-
-def sendArray(sp,array)
-  sp.write([255].pack('C'));
-  checksum = 0;
-  array.each do |value|
-    sp.write([value].pack('C'))
-    checksum = checksum + value
-  end
-  sp.write([checksum].pack('s'))
-end
+require 'arduino' #new
 
 CONFIG = File.open("config.yaml") { |f| YAML.load(f) }
 puts "Configuration:"
 puts CONFIG.to_yaml
 
-sp = SerialPort.new(CONFIG["serial"], CONFIG["baud"], CONFIG["data_bits"], CONFIG["stop_bits"], SerialPort::NONE)
-sp.sync = true #what is this really?
+arduino = Arduino.new 'arduino_config.yaml'
+
+#sp = SerialPort.new(CONFIG["serial"], CONFIG["baud"], CONFIG["data_bits"], CONFIG["stop_bits"], SerialPort::NONE)
+#sp.sync = true #what is this really?
 
 # The pc_to_arduino_mask is how we filter the packet from X-Plane and defines what we deliver to the arduino.
 ALL = [0,1,2,3,4,5,6,7]
@@ -102,11 +77,11 @@ while true
     # some values are obviously different - eg altitude. In that case we would send a float.
     # an improvement would be having the mask know whether to send a float or not. EDGE case at the moment.
     
-    sendArray(sp,serial_vals)
+    arduino.sendArray(serial_vals)
     
     p serial_vals
 
-    if (serial_data = getBytes(sp,3)) != []
+    if (serial_data = arduino.getBytes(3)) != []
   
     p serial_data
     #screw with the values. implement in the masks later TODO
