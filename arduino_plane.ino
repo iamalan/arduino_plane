@@ -108,7 +108,7 @@ void toggleByteIfValueHIGH(byte* pByte, int thePin)
 {
    if(digitalRead(thePin) == HIGH)
    {
-     *pByte = HIGH;
+     *pByte = 254;
    }
    else
    {

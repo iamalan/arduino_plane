@@ -9,6 +9,20 @@ require 'xplane'
 require 'mapper'
 require 'filter'
 
+
+def hashify(array,map)
+  hash = {}
+  the_keys = map.keys.sort
+
+  array_pos = 0
+  the_keys.each do |k|
+    values_to_take = map[k].length
+    hash[k] = array[array_pos ... array_pos + values_to_take]
+    array_pos += values_to_take
+  end
+  return hash
+end
+
 CONFIG = File.open("config.yaml") { |f| YAML.load(f) }
 #puts "Configuration:"
 #puts CONFIG.to_yaml
@@ -28,20 +42,15 @@ pc_to_arduino_mask = {}
 pc_to_arduino_mask[67] = [0,1,2]
 pc_to_arduino_mask[127] = [6]
 pc_to_arduino_mask[13] = [4] #flap position
+f = Filter.new(pc_to_arduino_mask,8)
 
-
-m1 = ValueMapper.new 0.0,1.0
-
-
+# we should round as these are becoming bytes
+m1 = ValueMapper.new 0.0,1.0,ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, true
 map = {}
 map[67] = [m1,m1,m1]
 map[127] = [m1,m1]
 map[13] = [m1]
-
 m = Mapper.new map
-
-
-f = Filter.new(pc_to_arduino_mask,8)
 
 
 # Arduino to PC data masking
@@ -50,6 +59,11 @@ arduino_to_pc_serial_mask = {}
 arduino_to_pc_serial_mask[14] = [0]
 arduino_to_pc_serial_mask[13] = [0,3]
 
+map2 = {}
+# dont round when sending back to xplane
+map2[14] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 0.0, 1.0,false)] # gear gets mapped from 0.0 to 1.0
+map2[13] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, -1.0, 1.0,false), ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 0.0,1.0,false)] # trim and flap position
+m2 = Mapper.new map2
 
 while true
 
@@ -59,20 +73,20 @@ while true
    filtered = f.apply_filter(data)
    
     mapped = m.apply_map filtered
+  
+    p mapped
     
     arduino.sendHash(mapped)
     
   
 
     if (serial_data = arduino.getBytes(3)) != []
-  
-
-    #screw with the values. implement in the masks later TODO
-    serial_data[0] = 0.1 + (serial_data[0]-125.0)/125.0
-    serial_data[1] = serial_data[1]/255.0  
-    
-
       
+    serial_data = hashify(serial_data,arduino_to_pc_serial_mask)
+    
+    serial_data = m2.apply_map serial_data
+    
+        
     serial_types = arduino_to_pc_serial_mask.keys.sort
   
     #construct my_data with all xp_no values based on the number of serial_types keys
@@ -89,15 +103,19 @@ while true
     end
     
     packet_location = 6
+    data_count = 0
       
       serial_types.each do |key|   
        this_mask =  arduino_to_pc_serial_mask[key]
         this_mask.each do |v|
-           my_data[packet_location + v] = serial_data[next_value]
+           my_data[packet_location + v] = serial_data[key][data_count]
+           data_count += 1
            next_value += 1
         end
         packet_location += 9
+        data_count = 0
       end
+    
       
       x.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_types.length)
     end

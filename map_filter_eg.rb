@@ -14,13 +14,13 @@ filtered = f.apply_filter(data)
 
 
 
-m1 = ValueMapper.new 0.0,100
-m2 = ValueMapper.new 0, 2.0
+m1 = ValueMapper.new ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, -1.0, 1.0
+
 
 map = {}
 map[67] = [m1,m1,m1]
-map[127] = [m1,m2]
-map[13] = [m2]
+map[127] = [m1,m1]
+map[13] = [m1]
 
 m = Mapper.new map
 
