@@ -36,7 +36,6 @@ end
 # This would be the best place to decide how we should log.
 Log.instance.log_to_file
 
-
 # # Example usage for log to file
 # Log.instance.log_to_file
 # Log.instance.add 'hey'

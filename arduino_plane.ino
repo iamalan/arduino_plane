@@ -168,13 +168,15 @@ void loop()
                 
                 trim = analogRead(IN_TRIM);
                 trim = map(trim, 0, 1023, 0, 254);
-                input_values[0] = trim; 
+                 
                 
                 flap = analogRead(IN_FLAP);
                 flap = map(flap, 0, 1023, 0, 254);
-                input_values[1] = flap; 
                 
-                input_values[2] = switch_stat;
+                input_values[2] = flap;
+                input_values[1] = switch_stat; 
+                
+                input_values[0] = trim;
                 
                 sendArray(input_values,3);            
 }

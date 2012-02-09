@@ -57,12 +57,14 @@ m = Mapper.new map
 # data from the arduino arrives in an array of some order. Create a convention that data is always arranged in ascending order of its type and order in the 8 values.
 arduino_to_pc_serial_mask = {}
 arduino_to_pc_serial_mask[14] = [0]
-arduino_to_pc_serial_mask[13] = [0,3]
+arduino_to_pc_serial_mask[13] = [3]
+arduino_to_pc_serial_mask[28] = [0]
 
 map2 = {}
 # dont round when sending back to xplane
 map2[14] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 0.0, 1.0,false)] # gear gets mapped from 0.0 to 1.0
-map2[13] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, -1.0, 1.0,false), ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 0.0,1.0,false)] # trim and flap position
+map2[13] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 0.0,1.0,false)] # trim and flap position
+map2[28] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 699.0, 3000.0,false)]
 m2 = Mapper.new map2
 
 while true
@@ -85,7 +87,7 @@ while true
     
     serial_data = m2.apply_map serial_data
     
-        
+        p serial_data
     serial_types = arduino_to_pc_serial_mask.keys.sort
   
     #construct my_data with all xp_no values based on the number of serial_types keys
