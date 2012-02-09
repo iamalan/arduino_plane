@@ -152,7 +152,7 @@ void loop()
                 getBytes(values,5);
 
 
-                servo.write(map(values[0], 127, 255, 0, 180));
+                servo.write(map(values[0], 0, 254, 0, 180));
                 
                 togglePinIfValue(OUT_RIGHT_GEAR, values[2], 254);
                 togglePinIfValue(OUT_NOSE_GEAR, values[1], 254);

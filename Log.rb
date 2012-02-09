@@ -34,7 +34,7 @@ class Log
 end
 
 # This would be the best place to decide how we should log.
-Log.instance.log_to_screen
+Log.instance.log_to_file
 
 
 # # Example usage for log to file

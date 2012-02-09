@@ -74,7 +74,6 @@ while true
    
     mapped = m.apply_map filtered
   
-    p mapped
     
     arduino.sendHash(mapped)
     
