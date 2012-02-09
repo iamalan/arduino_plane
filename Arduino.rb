@@ -71,6 +71,27 @@ class Arduino
     end
   end
   
+  def sendHash(hash)
+     begin
+        Log.instance.add "#{self.class.name} #{__method__} called with #{hash.inspect}."
+    
+    keys = hash.keys.sort
+    
+    Log.instance.add "sendHash will create an array corresponding to keys: #{keys.inspect}"
+  
+    array = []
+    keys.each do |k|
+      array = array + hash[k]
+    end
+    
+    rescue Exception => e
+        Log.instance.add "#{e} #{e.backtrace}"
+    end
+    
+    Log.instance.add "Passing to sendArray..."
+    sendArray(array)
+  end
+  
 
   
 end

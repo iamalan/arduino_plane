@@ -21,13 +21,15 @@ class Xplane
       end   
   end 
   
-  def getPacket
+  def getPacket(data_fields)
     begin
       Log.instance.add "#{self.class.name} #{__method__} called."
-      d,a = @s.recv(@CONFIG["xp_packet_header"].length + 36*@this_packet[:data_blocks])
-      data = d.unpack(@unpacking_string)
+      d,a = @s.recv(@CONFIG["xp_packet_header"].length + 36*data_fields)
+      data_with_header = d.unpack(@CONFIG["xp_packet_header"] + @CONFIG["xp_packet_data_s"]*data_fields)
+  
+      data = data_with_header[@CONFIG["xp_packet_header"].length .. @CONFIG["xp_packet_header"].length + data_fields*@CONFIG["xp_packet_data_s"].length]
       Log.instance.add "Unpacked packet, returning #{data.inspect}"
-      return data[CONFIG["xp_packet_header"].length..data.length]
+      return data
     
     rescue Exception => e
       Log.instance.add "#{e} #{e.backtrace}"
@@ -39,12 +41,7 @@ class Xplane
     @s.send(blah, 0, @CONFIG["xp_ip"], @CONFIG["xp_recv_port"])
   end
   
-  def set_mask(mask)
-    @mask = mask
-    @this_packet = {:header => 1, :data_blocks => @mask.keys.length}
-    @unpacking_string = "#{@CONFIG["xp_packet_header"]}"
-    @this_packet[:data_blocks].times { @unpacking_string << @CONFIG["xp_packet_data_s"] }
-  end
+
   
   #obsolete with the new mapper stuff
   def apply_mask(data)

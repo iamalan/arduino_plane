@@ -154,11 +154,11 @@ void loop()
 
                 servo.write(map(values[0], 127, 255, 0, 180));
                 
-                togglePinIfValue(OUT_RIGHT_GEAR, values[2], 255);
-                togglePinIfValue(OUT_NOSE_GEAR, values[1], 255);
-                togglePinIfValue(OUT_LEFT_GEAR, values[3], 255);
+                togglePinIfValue(OUT_RIGHT_GEAR, values[2], 254);
+                togglePinIfValue(OUT_NOSE_GEAR, values[1], 254);
+                togglePinIfValue(OUT_LEFT_GEAR, values[3], 254);
                 
-                togglePinIfValue(OUT_STALL, values[4], 255);
+                togglePinIfValue(OUT_STALL, values[4], 254);
                 toggleByteIfValueHIGH(&switch_stat, IN_SWITCH);
                 
               
@@ -167,11 +167,11 @@ void loop()
                 
                 
                 trim = analogRead(IN_TRIM);
-                trim = map(trim, 0, 1023, 0, 255);
+                trim = map(trim, 0, 1023, 0, 254);
                 input_values[0] = trim; 
                 
                 flap = analogRead(IN_FLAP);
-                flap = map(flap, 0, 1023, 0, 255);
+                flap = map(flap, 0, 1023, 0, 254);
                 input_values[1] = flap; 
                 
                 input_values[2] = switch_stat;

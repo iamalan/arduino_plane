@@ -6,6 +6,9 @@ require 'YAML'
 require 'arduino' #new
 require 'xplane'
 
+require 'mapper'
+require 'filter'
+
 CONFIG = File.open("config.yaml") { |f| YAML.load(f) }
 #puts "Configuration:"
 #puts CONFIG.to_yaml
@@ -14,8 +17,6 @@ x = Xplane.new 'xplane_config.yaml'
 
 arduino = Arduino.new 'arduino_config.yaml'
 
-#sp = SerialPort.new(CONFIG["serial"], CONFIG["baud"], CONFIG["data_bits"], CONFIG["stop_bits"], SerialPort::NONE)
-#sp.sync = true #what is this really?
 
 # The pc_to_arduino_mask is how we filter the packet from X-Plane and defines what we deliver to the arduino.
 ALL = [0,1,2,3,4,5,6,7]
@@ -28,7 +29,20 @@ pc_to_arduino_mask[67] = [0,1,2]
 pc_to_arduino_mask[127] = [6]
 pc_to_arduino_mask[13] = [4] #flap position
 
-x.set_mask(pc_to_arduino_mask)
+
+m1 = ValueMapper.new 0.0,1.0
+
+
+map = {}
+map[67] = [m1,m1,m1]
+map[127] = [m1,m1]
+map[13] = [m1]
+
+m = Mapper.new map
+
+
+f = Filter.new(pc_to_arduino_mask,8)
+
 
 # Arduino to PC data masking
 # data from the arduino arrives in an array of some order. Create a convention that data is always arranged in ascending order of its type and order in the 8 values.
@@ -36,47 +50,28 @@ arduino_to_pc_serial_mask = {}
 arduino_to_pc_serial_mask[14] = [0]
 arduino_to_pc_serial_mask[13] = [0,3]
 
-# based on the number of keys in the mask, the UDP packet we expect will have a header and a number of data_blocks
-#this_packet = {:header => 1, :data_blocks => pc_to_arduino_mask.keys.length} # moved to x_plane class
-
-# create the string that unpacks the packet based on the expected packet
-# unpacking_string = "#{CONFIG["xp_packet_header"]}"
-# this_packet[:data_blocks].times { unpacking_string << CONFIG["xp_packet_data_s"] }
-
-#s = UDPSocket.new
-#s.bind('',CONFIG["xp_send_port"])
-
-puts
-puts "Entering loop..."
 
 while true
-  #d,a = s.recv(CONFIG["xp_packet_header"].length + 36*this_packet[:data_blocks])
-  data = x.getPacket
-  #data = d.unpack(unpacking_string)
- 
-  
-   serial_vals = x.apply_mask(data)
-  
- 
-  
 
-    # write the serial values as chars, I can't see a reason for the arduino to have floats. 
-    # ASSUME that all values are between 0 and 1 and we will map them to 0-255
-    # some values are obviously different - eg altitude. In that case we would send a float.
-    # an improvement would be having the mask know whether to send a float or not. EDGE case at the moment.
+  data = x.getPacket(3)
+
+
+   filtered = f.apply_filter(data)
+   
+    mapped = m.apply_map filtered
     
-    arduino.sendArray(serial_vals)
+    arduino.sendHash(mapped)
     
-    p serial_vals
+  
 
     if (serial_data = arduino.getBytes(3)) != []
   
-    p serial_data
+
     #screw with the values. implement in the masks later TODO
     serial_data[0] = 0.1 + (serial_data[0]-125.0)/125.0
     serial_data[1] = serial_data[1]/255.0  
     
-    p serial_data
+
       
     serial_types = arduino_to_pc_serial_mask.keys.sort
   
