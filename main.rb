@@ -85,8 +85,8 @@ m = Mapper.new map
 #################
 
 
-
-# Arduino to PC data masking
+#################
+# DATA FROM ARDUINO DEFINES
 # data from the arduino arrives in an array of some order. Create a convention that data is always arranged in ascending order of its type and order in the 8 values.
 arduino_to_pc_serial_mask = {}
 arduino_to_pc_serial_mask[14] = [0]
@@ -99,11 +99,15 @@ map2[14] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VA
 map2[13] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 0.0,1.0,false)] # trim and flap position
 map2[28] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 699.0, 3000.0,false)]
 m2 = Mapper.new map2
+#
+# END DATA FROM ARDUINO DEFINES
+#################
 
 
-
+########
+# MAIN LOOP
+########
 while true
-
   data = x.getPacket(3)
   # data is passed across here as an array. Better as hash.
   filtered = f.apply_filter(data)
@@ -121,5 +125,8 @@ while true
 
     x.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_data.keys.length)
   end
-    
 end
+########
+# END MAIN LOOP
+########
+
