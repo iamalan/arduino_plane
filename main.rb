@@ -10,6 +10,40 @@ require 'mapper'
 require 'filter'
 
 
+def createArrayFromHashAndMask(hash,mask)
+  
+   serial_types = mask.keys.sort
+ 
+   #construct my_data with all xp_no values based on the number of serial_types keys
+   my_data = [68,65,84,65,0]
+   serial_types.length.times { my_data.concat([0] + [CONFIG["xp_no"]]*8) }
+   #iterate over my_data placing correct serial values and packet types
+   
+   packet_location = 5 
+   next_value = 0
+   
+   # fill the packet types
+   serial_types.each_with_index do |key,i|
+     my_data[packet_location + i*9] = key
+   end
+   
+   packet_location = 6
+   data_count = 0
+     
+     serial_types.each do |key|   
+      this_mask =  mask[key]
+       this_mask.each do |v|
+          my_data[packet_location + v] = hash[key][data_count]
+          data_count += 1
+          next_value += 1
+       end
+       packet_location += 9
+       data_count = 0
+     end
+  return my_data
+end
+
+
 def hashify(array,map)
   hash = {}
   the_keys = map.keys.sort
@@ -71,51 +105,21 @@ m2 = Mapper.new map2
 while true
 
   data = x.getPacket(3)
-
+  # data is passed across here as an array. Better as hash.
   filtered = f.apply_filter(data)
   mapped = m.apply_map filtered
   arduino.sendHash(mapped)
     
-  
-
-    if (serial_data = arduino.getBytes(3)) != []
+  if (serial_data = arduino.getBytes(3)) != []
       
     serial_data = hashify(serial_data,arduino_to_pc_serial_mask)
-    
     serial_data = m2.apply_map serial_data
     
     p serial_data
-    serial_types = arduino_to_pc_serial_mask.keys.sort
-  
-    #construct my_data with all xp_no values based on the number of serial_types keys
-    my_data = [68,65,84,65,0]
-    serial_types.length.times { my_data.concat([0] + [CONFIG["xp_no"]]*8) }
-    #iterate over my_data placing correct serial values and packet types
     
-    packet_location = 5 
-    next_value = 0
-    
-    # fill the packet types
-    serial_types.each_with_index do |key,i|
-      my_data[packet_location + i*9] = key
-    end
-    
-    packet_location = 6
-    data_count = 0
-      
-      serial_types.each do |key|   
-       this_mask =  arduino_to_pc_serial_mask[key]
-        this_mask.each do |v|
-           my_data[packet_location + v] = serial_data[key][data_count]
-           data_count += 1
-           next_value += 1
-        end
-        packet_location += 9
-        data_count = 0
-      end
-    
-      
-      x.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_types.length)
-    end
+    my_data = createArrayFromHashAndMask(serial_data,arduino_to_pc_serial_mask)
+
+    x.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_data.keys.length)
+  end
     
 end

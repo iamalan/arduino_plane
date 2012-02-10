@@ -5,6 +5,7 @@ require 'socket'
 require 'log'
 
 class Xplane
+  DATA_HEADER = [68,65,84,65,0]
   def initialize(config_file)   
     begin
       @CONFIG = File.open(config_file) { |f| YAML.load(f) }
@@ -41,6 +42,6 @@ class Xplane
   def send(blah)
     @s.send(blah, 0, @CONFIG["xp_ip"], @CONFIG["xp_recv_port"])
   end
-end
 
-#x = Xplane.new 'xplane_config.yaml'
+  
+end
