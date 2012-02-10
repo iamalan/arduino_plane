@@ -95,7 +95,3 @@ class Arduino
 
   
 end
-
-#a = Arduino.new 'arduino_config.yaml'
-#a.sendArray([300,255,255])
-

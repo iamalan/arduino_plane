@@ -3,7 +3,7 @@ require 'socket'
 require 'serialport'
 require 'YAML'
 
-require 'arduino' #new
+require 'arduino'
 require 'xplane'
 
 require 'mapper'
@@ -24,20 +24,13 @@ def hashify(array,map)
 end
 
 CONFIG = File.open("config.yaml") { |f| YAML.load(f) }
-#puts "Configuration:"
-#puts CONFIG.to_yaml
 
 x = Xplane.new 'xplane_config.yaml'
-
 arduino = Arduino.new 'arduino_config.yaml'
 
-
-# The pc_to_arduino_mask is how we filter the packet from X-Plane and defines what we deliver to the arduino.
-ALL = [0,1,2,3,4,5,6,7]
-NONE = []
-
-# the reason we need to define all of the data we expect in the packet is because we want to know how many bytes to recv later on.
-# data is sent over serial in ascending order of the keys of the pc_to_arduino_mask and then in ascending order of the mask itself.
+#################
+# DATA TO ARDUINO DEFINES
+# Define all of the packet types that will arrive. If they don't need to be sent to the Arduino, assing a [] to the keys value.
 pc_to_arduino_mask = {}
 pc_to_arduino_mask[67] = [0,1,2]
 pc_to_arduino_mask[127] = [6]
@@ -46,11 +39,17 @@ f = Filter.new(pc_to_arduino_mask,8)
 
 # we should round as these are becoming bytes
 m1 = ValueMapper.new 0.0,1.0,ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, true
+
+# only those packet types with non-empty array values defined below. These go to the Arduino in order of keys.
 map = {}
 map[67] = [m1,m1,m1]
 map[127] = [m1,m1]
 map[13] = [m1]
 m = Mapper.new map
+#
+# END DATA TO ARDUINO DEFINES
+#################
+
 
 
 # Arduino to PC data masking
@@ -61,23 +60,21 @@ arduino_to_pc_serial_mask[13] = [3]
 arduino_to_pc_serial_mask[28] = [0]
 
 map2 = {}
-# dont round when sending back to xplane
+# dont round when sending to xplane
 map2[14] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 0.0, 1.0,false)] # gear gets mapped from 0.0 to 1.0
 map2[13] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 0.0,1.0,false)] # trim and flap position
 map2[28] = [ValueMapper.new(ValueMapper::BYTE_MIN_VALUE,ValueMapper::BYTE_MAX_VALUE, 699.0, 3000.0,false)]
 m2 = Mapper.new map2
 
+
+
 while true
 
   data = x.getPacket(3)
 
-
-   filtered = f.apply_filter(data)
-   
-    mapped = m.apply_map filtered
-  
-    
-    arduino.sendHash(mapped)
+  filtered = f.apply_filter(data)
+  mapped = m.apply_map filtered
+  arduino.sendHash(mapped)
     
   
 
@@ -87,7 +84,7 @@ while true
     
     serial_data = m2.apply_map serial_data
     
-        p serial_data
+    p serial_data
     serial_types = arduino_to_pc_serial_mask.keys.sort
   
     #construct my_data with all xp_no values based on the number of serial_types keys
@@ -120,4 +117,5 @@ while true
       
       x.send my_data.pack("#{CONFIG["xp_packet_header"]}" << "#{CONFIG["xp_packet_data_s"]}"*serial_types.length)
     end
+    
 end

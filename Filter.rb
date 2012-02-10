@@ -4,6 +4,7 @@ class Filter
     @data_size = data_size
   end
   
+  #rewrite this to accept data in a hash
   def apply_filter(data)
     hash = {}
     begin
